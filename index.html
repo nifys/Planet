@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000"><title>Earth / Users</title>
+<style>
+:root{color-scheme:dark;--white:#f5f6fa;--muted:#858b98}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:var(--white);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+#stage{position:fixed;inset:0;background:#000;display:grid;place-items:center;touch-action:none}
+#globe{width:min(94vw,80vh,760px);height:min(94vw,80vh,760px);overflow:visible;touch-action:none;user-select:none}
+.land{fill:#254b3d;stroke:#4f7c68;stroke-width:.8;opacity:.95}.gridline{fill:none;stroke:#9ac8f0;stroke-opacity:.2;stroke-width:1}
+.marker{cursor:pointer;outline:none}.marker .ring{fill:#080a0f;fill-opacity:.9;stroke:#f0f2f6;stroke-width:1.5}.marker .plus{stroke:#fff;stroke-width:1.7;stroke-linecap:round}.marker .halo{fill:none;stroke:#9db5d4;stroke-opacity:.25;stroke-width:5}.marker.filled .ring{fill:#0b0d12;stroke-width:2}.marker .avatar-initial{fill:#dce5f2;font-size:7px;font-weight:700;text-anchor:middle;dominant-baseline:middle}.marker .check{fill:#ef4058;stroke:#ffb0bb;stroke-width:.7}.marker .checkmark{fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+#hint{position:fixed;bottom:calc(25px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:11px;letter-spacing:.2em;color:#505461;text-transform:uppercase;pointer-events:none}
+#shade{position:fixed;inset:0;background:#0009;opacity:0;pointer-events:none;transition:opacity .25s;z-index:4}
+#panel{position:fixed;z-index:5;bottom:0;left:0;right:0;max-height:76vh;overflow:auto;background:#101217;border:1px solid #292d36;border-bottom:0;border-radius:24px 24px 0 0;padding:9px 22px calc(24px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+body.open #panel{transform:translateY(0)}body.open #shade{opacity:1;pointer-events:auto}
+#grab{width:42px;height:4px;border-radius:5px;background:#555b67;margin:4px auto 22px;touch-action:pan-y}
+#close{position:absolute;right:18px;top:17px;border:0;border-radius:50%;width:30px;height:30px;background:#282c34;color:#eee;font-size:21px}
+.head{display:flex;align-items:center;gap:14px;margin-bottom:18px}#avatar{width:66px;height:66px;border-radius:20px;background:#191d25;border:1px solid #343a46;object-fit:cover}.ban-mark{display:none;background:#e52d45;color:#fff;border-radius:8px;padding:3px 7px;font-size:10px;font-weight:800;letter-spacing:.08em;margin-top:5px}.marker .ban-badge{fill:#e52d45;stroke:#ffb3bc;stroke-width:.7}.marker .ban-text{fill:#fff;font-size:6px;font-weight:900;text-anchor:middle;dominant-baseline:middle}
+#name{font-size:22px;font-weight:760;letter-spacing:-.04em;overflow-wrap:anywhere}.verified{display:none;vertical-align:middle;margin-left:7px;color:#fff;background:#ed334c;border-radius:50%;width:21px;height:21px;align-items:center;justify-content:center;font-size:13px}
+#verifyButton{display:none;margin-top:8px;width:57px;height:20px;border-radius:6px;border:1px solid #373b44;background:#171a20;position:relative}
+#verifyButton:after{content:"";height:1px;background:#424650;position:absolute;left:8px;right:8px;top:9px}
+#info{font-size:15px;line-height:1.55;color:#d4d7df;margin:0 0 19px}.label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#858b98;margin-bottom:9px}
+#stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.stat{display:flex;align-items:center;gap:10px;border:1px solid #282c35;background:linear-gradient(145deg,#191d25,#101217);border-radius:13px;padding:11px 12px;min-width:0}
+.stat-icon{width:25px;height:25px;flex:none}.stat-copy{min-width:0}.stat-label{font-size:10px;color:#8c94a2;letter-spacing:.09em;text-transform:uppercase}.stat-value{font-size:18px;font-weight:750;line-height:1.25;margin-top:2px}.hp .stat-icon{color:#ff526d}.shield .stat-icon{color:#7dbdff}
+#spawn{display:flex;align-items:center;gap:10px;border:1px solid #282c35;background:#15181e;border-radius:13px;padding:12px 14px;font-size:13px;line-height:1.45;color:#b8bfcb;white-space:pre-wrap}
+#spawn svg{width:21px;height:21px;flex:none;color:#b7a5ff}
+#verifyInfo{border:1px solid #282c35;background:#15181e;border-radius:13px;padding:13px 14px;font-size:13px;line-height:1.5;color:#b8bfcb;white-space:pre-wrap}
+#verifyInfo{display:none;margin-top:12px;border-color:#78303b;color:#ff9ba8;background:#251217}
+#toast{position:fixed;z-index:9;left:18px;right:18px;bottom:calc(28px + env(safe-area-inset-bottom));padding:17px 18px;border:1px solid #343943;border-radius:16px;background:#171a20;box-shadow:0 15px 60px #000b;opacity:0;transform:translateY(16px);pointer-events:none;transition:.22s;font-size:14px;line-height:1.5}
+#toast.show{opacity:1;transform:translateY(0)}#toast strong{display:block;font-size:15px;margin-bottom:4px}#toast a{color:#a9ceff;text-decoration:none}
+#joinModal{position:fixed;z-index:15;inset:0;background:#030407dd;display:none;align-items:center;justify-content:center;padding:20px}#joinModal.show{display:flex}.join-card{width:min(100%,430px);background:#11141b;border:1px solid #343b49;border-radius:24px;padding:22px;box-shadow:0 25px 90px #000b}.join-card h2{margin:0 0 8px;font-size:22px}.join-card p{color:#a4adbd;font-size:13px;line-height:1.5;margin:0 0 18px}.join-card label{display:block;color:#a4adbd;font-size:12px;margin:12px 0 6px}.join-card input,.join-card textarea{box-sizing:border-box;width:100%;background:#080a0f;color:#fff;border:1px solid #343b49;border-radius:11px;padding:12px;font:inherit}.join-card textarea{min-height:80px;resize:vertical}.join-actions{display:flex;gap:10px;margin-top:16px}.join-actions button{flex:1;border-radius:12px;padding:12px;border:1px solid #394354;background:#202632;color:white;font-weight:700}.join-actions .submit{background:#dce8ff;color:#10141c;border-color:#dce8ff}#joinStatus{font-size:12px;margin-top:12px;color:#a9ceff;min-height:16px}
+@media(min-width:700px){#panel{left:auto;right:24px;bottom:24px;width:390px;border:1px solid #292d36;border-radius:24px;max-height:75vh}body.open #panel{transform:translateY(0)}}
+
+#adminGate,#adminPanel{position:fixed;z-index:20;inset:0;background:#050609f2;display:none;overflow:auto;padding:24px 16px calc(28px + env(safe-area-inset-bottom))}
+#adminGate.active,#adminPanel.active{display:block}
+.admin-card{max-width:850px;margin:5vh auto;background:#11141b;border:1px solid #2b303a;border-radius:22px;padding:22px;box-shadow:0 20px 80px #000}
+.admin-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.admin-title{font-size:22px;font-weight:800;letter-spacing:-.04em}
+.admin-muted{color:#8e96a5;font-size:12px;line-height:1.5}
+.admin-input,.admin-select{width:100%;background:#080a0e;color:#f4f5f7;border:1px solid #343a46;border-radius:10px;padding:11px 12px;margin:5px 0 12px;outline:none}
+.admin-btn{border:1px solid #353b47;background:#202530;color:#fff;border-radius:10px;padding:10px 13px;font-weight:650;cursor:pointer}
+.admin-btn.primary{background:#d92f4c;border-color:#f15a72}.admin-btn.good{background:#164b3c;border-color:#2e856d}
+.admin-actions{display:flex;gap:7px;flex-wrap:wrap}.admin-list{display:grid;gap:9px}
+.admin-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid #292e38;border-radius:13px;background:#171a21}
+.admin-row strong{display:block;overflow-wrap:anywhere}.admin-row small{display:block;color:#9299a6;margin-top:4px}
+.admin-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.admin-tabs button.active{background:#f2f3f5;color:#101114}
+.admin-form{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.admin-form .wide{grid-column:1/-1}
+@media(max-width:560px){.admin-card{padding:16px}.admin-row{grid-template-columns:1fr}.admin-form{grid-template-columns:1fr}.admin-form .wide{grid-column:auto}}
+
+</style></head>
+<body>
+<main id="stage" aria-label="Планета пользователей">
+<svg id="globe" viewBox="0 0 400 400" role="img" aria-label="Стилизованная вращающаяся Земля">
+<defs>
+ <radialGradient id="ocean" cx="32%" cy="26%" r="80%"><stop offset="0" stop-color="#24699a"/><stop offset=".48" stop-color="#12416c"/><stop offset=".82" stop-color="#09213b"/><stop offset="1" stop-color="#030914"/></radialGradient>
+ <radialGradient id="shade" cx="28%" cy="22%" r="82%"><stop offset="0" stop-color="#fff" stop-opacity=".13"/><stop offset=".6" stop-color="#000" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
+ <clipPath id="clip"><circle cx="200" cy="200" r="151"/></clipPath><clipPath id="markerClip" clipPathUnits="userSpaceOnUse"><circle cx="0" cy="0" r="15"/></clipPath>
+</defs>
+<circle cx="200" cy="200" r="153" fill="#07111e" stroke="#244563" stroke-width="1.5"/>
+<g id="planet" clip-path="url(#clip)">
+ <circle cx="200" cy="200" r="151" fill="url(#ocean)"/>
+ <g id="surface" transform="rotate(0 200 200)">
+ <g class="gridline">
+  <ellipse cx="200" cy="200" rx="150" ry="35"/><ellipse cx="200" cy="200" rx="150" ry="75"/><ellipse cx="200" cy="200" rx="150" ry="112"/>
+  <ellipse cx="200" cy="200" rx="45" ry="150"/><ellipse cx="200" cy="200" rx="92" ry="150"/><ellipse cx="200" cy="200" rx="125" ry="150"/>
+ </g>
+ <g id="continents">
+  <path class="land" d="M48 112 L79 91 104 82 125 94 137 112 124 128 144 145 129 163 112 157 101 183 83 201 74 179 61 158 45 145Z"/>
+  <path class="land" d="M119 201 L143 210 158 239 150 266 138 292 124 278 116 249 103 226Z"/>
+  <path class="land" d="M171 88 L202 75 231 86 247 104 276 100 300 117 326 119 339 137 319 150 291 144 277 162 252 160 234 178 214 166 192 146 171 135 158 111Z"/>
+  <path class="land" d="M209 179 L238 177 261 194 266 223 248 251 231 279 214 269 205 239 190 214Z"/>
+  <path class="land" d="M287 251 L319 245 343 263 336 286 311 300 288 282Z"/>
+ </g>
+ </g>
+ <circle cx="200" cy="200" r="151" fill="url(#shade)"/>
+</g>
+<circle cx="200" cy="200" r="152" fill="none" stroke="#5a8fbd" stroke-opacity=".65" stroke-width="1.6"/>
+<g id="markers"></g>
+</svg></main>
+<div id="hint">DRAG TO ROTATE · TAP A MARKER</div><div id="shade"></div>
+<div id="joinModal" aria-hidden="true"><form class="join-card" id="joinForm"><h2>Добавиться на планету</h2><p>Оставь данные. Заявка попадёт создателю на рассмотрение. Email обязателен — укажи настоящий адрес.</p><label for="joinName">Имя / ник *</label><input id="joinName" name="name" maxlength="40" required placeholder="Как тебя показывать на планете"><label for="joinEmail">Email *</label><input id="joinEmail" name="email" type="email" maxlength="254" required autocomplete="email" placeholder="you@example.com"><label for="joinInfo">О себе (необязательно)</label><textarea id="joinInfo" name="info" maxlength="240" placeholder="Короткое описание"></textarea><label for="joinAvatar">Аватарка (необязательно)</label><input id="joinAvatar" name="avatar" type="file" accept="image/*"><p class="admin-muted">Изображение будет уменьшено для быстрой загрузки.</p><div class="join-actions"><button type="button" id="joinCancel">Отмена</button><button class="submit" type="submit" id="joinSubmit">Отправить заявку</button></div><div id="joinStatus" role="status"></div></form></div>
+<section id="panel" aria-hidden="true"><div id="grab"></div><button id="close" aria-label="Закрыть">×</button>
+ <div class="head"><img id="avatar" alt=""><div><div id="name"></div><span class="verified" id="verified">✓</span><br><span class="ban-mark" id="banMark">BANNED</span><br><button id="verifyButton" aria-label="Показать статус"></button></div></div>
+ <p id="info"></p><div class="label">Характеристики</div>
+ <div id="stats">
+  <div class="stat hp"><svg class="stat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 4.8a5.4 5.4 0 0 0-7.6 0L12 6l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6L12 21l8.8-8.6a5.4 5.4 0 0 0 0-7.6Z" fill="currentColor"/></svg><div class="stat-copy"><div class="stat-label">Здоровье</div><div class="stat-value" id="hpValue">— HP</div></div></div>
+  <div class="stat shield"><svg class="stat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5 20 5.6v5.7c0 5-3.4 8.4-8 10.2-4.6-1.8-8-5.2-8-10.2V5.6L12 2.5Z" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.2 2.2 4.8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="stat-copy"><div class="stat-label">Щит</div><div class="stat-value" id="shieldValue">—</div></div></div>
+ </div>
+ <div class="label">Появление</div><div id="spawn"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 6.5v5.8l3.7 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span id="spawnText"></span></div><div id="verifyInfo"></div>
+</section><div id="toast" role="status"></div><input id="adminAvatarPicker" type="file" accept="image/*" hidden>
+
+<div id="adminGate" aria-hidden="true">
+ <div class="admin-card" style="max-width:410px">
+  <div class="admin-top"><div><div class="admin-title">NIFY / ADMIN</div><div class="admin-muted">Закрытая панель управления</div></div><button class="admin-btn" id="adminGateClose">✕</button></div>
+  <label class="admin-muted" for="adminEmail">Email администратора Supabase</label>
+  <input class="admin-input" id="adminEmail" type="email" autocomplete="username" placeholder="admin@example.com">
+  <label class="admin-muted" for="adminPassword">Пароль аккаунта Supabase</label>
+  <input class="admin-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Пароль Supabase">
+  <button class="admin-btn primary" id="adminLogin" style="width:100%">Войти в панель</button>
+  <p class="admin-muted" id="adminError">Доступ только владельцу проекта.</p>
+ </div>
+</div>
+<div id="adminPanel" aria-hidden="true">
+ <div class="admin-card">
+  <div class="admin-top"><div><div class="admin-title">Панель управления</div><div class="admin-muted">Игроки · респавны · верификация · заявки</div></div><button class="admin-btn" id="adminLogout">Выйти ✕</button></div>
+  <div class="admin-muted" id="adminModeNotice">Supabase: общие данные и синхронизация в реальном времени. Админ-вход проверяется через Supabase Auth.</div>
+  <div class="admin-tabs">
+   <button class="admin-btn active" data-tab="players">Игроки</button><button class="admin-btn" data-tab="requests">Заявки</button><button class="admin-btn" data-tab="settings">Настройки</button>
+  </div>
+  <section id="adminPlayers">
+   <div class="admin-form">
+    <div><label class="admin-muted">Поиск игрока</label><input class="admin-input" id="adminSearch" placeholder="Имя или ID"></div>
+    <div><label class="admin-muted">Фильтр</label><select class="admin-select" id="adminFilter"><option value="all">Все пользователи</option><option value="visible">На планете</option><option value="dead">Погибшие</option><option value="verified">С галочкой</option></select></div>
+   </div>
+   <div class="admin-list" id="adminPlayerList"></div>
+  </section>
+  <section id="adminRequests" hidden>
+   <p class="admin-muted">Заявки на появление на планете. Одобрение добавляет пользователя в видимые.</p>
+   <div class="admin-list" id="adminRequestList"></div>
+  </section>
+  <section id="adminSettings" hidden>
+   <h3>Добавить заявку / игрока</h3>
+   <div class="admin-form">
+    <div><label class="admin-muted">Имя</label><input class="admin-input" id="newName" placeholder="Ник игрока"></div>
+    <div><label class="admin-muted">Аватарка</label><input class="admin-input" id="newAvatar" type="file" accept="image/*"></div>
+    <div class="wide"><label class="admin-muted">Информация</label><input class="admin-input" id="newInfo" placeholder="Короткое описание"></div>
+   </div>
+   <div class="admin-actions"><button class="admin-btn good" id="addRequest">Создать заявку</button><button class="admin-btn" id="addPlayerDirect">Добавить сразу</button><button class="admin-btn" id="exportUsers">Скачать users.json</button></div>
+   <p class="admin-muted">Заявки посетителей с кнопки «+» сохраняются в общей базе Supabase и требуют имя + email. Добавлять игрока напрямую можно только из админки.</p>
+  </section>
+ </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://llvdzsrxiabugblputft.supabase.co";
+const SUPABASE_KEY="sb_publishable_m7olJidgmbFvdgF3AL16wQ_qbLP6LPW";
+const supabaseClient=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+let remoteReady=false, remoteSaveTimer=null, remoteApplying=false, syncChannel=null;
+const svgNS='http://www.w3.org/2000/svg', globe=document.getElementById('globe'), planet=document.getElementById('planet'), markerGroup=document.getElementById('markers');
+let users=[], rotation=0, dragging=false, lastX=0, lastY=0, tilt=0, touchStartY=0, toastTimer;
+function svg(tag,attrs={}){const e=document.createElementNS(svgNS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}
+function showToast(){const m=document.getElementById('joinModal');m.classList.add('show');m.setAttribute('aria-hidden','false');document.getElementById('joinStatus').textContent='';document.getElementById('joinName').focus()}
+function closeJoin(){const m=document.getElementById('joinModal');m.classList.remove('show');m.setAttribute('aria-hidden','true')}
+document.getElementById('joinCancel').onclick=closeJoin;
+document.getElementById('joinModal').addEventListener('click',e=>{if(e.target.id==='joinModal')closeJoin()});
+
+function point(lon,lat){const a=(lon+rotation)*Math.PI/180,b=lat*Math.PI/180;const x=Math.cos(b)*Math.sin(a),y=Math.sin(b)*Math.cos(tilt)-Math.cos(b)*Math.cos(a)*Math.sin(tilt),z=Math.sin(b)*Math.sin(tilt)+Math.cos(b)*Math.cos(a)*Math.cos(tilt);return {x:200+x*150,y:200-y*150,z}}
+let markerPositions=[];
+function renderMarkers(){
+ markerGroup.replaceChildren();markerPositions=[];
+ // Fibonacci-like globe distribution, with iterative repulsion to prevent visible markers colliding.
+ const points=[];
+ for(let i=0;i<15;i++){
+  let lon=i*137.508-150,lat=Math.asin(1-2*(i+.5)/15)*180/Math.PI;
+  if(i<3){lon=[-48,28,105][i];lat=[12,-12,8][i]}
+  points.push({lon,lat,x:200+Math.cos(lat*Math.PI/180)*Math.sin(lon*Math.PI/180)*150,y:200-Math.sin(lat*Math.PI/180)*150});
+ }
+ for(let iter=0;iter<85;iter++){
+  for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
+   const a=points[i],b=points[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01,min=(i<3||j<3)?48:42;
+   if(d<min){const push=(min-d)*.028,ux=dx/d,uy=dy/d;a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push}
+  }
+  for(const p of points){const dx=p.x-200,dy=p.y-200,d=Math.hypot(dx,dy)||1;if(d>145){p.x=200+dx/d*145;p.y=200+dy/d*145}}
+ }
+ for(let i=0;i<15;i++){
+  const activeUsers=users.filter(x=>x.visible&&!x.dead); const u=activeUsers[i]||null;
+  // Use resolved 2D positions for spacing, but hide markers on the far side of the globe.
+  const p=point(points[i].lon,points[i].lat);
+  // Place markers using the live globe projection so they visibly move with rotation.
+  const g=svg('g',{class:'marker'+(u?' filled':''),transform:`translate(${p.x} ${p.y})`,tabindex:'0',role:'button','aria-label':u?u.name:'Связаться'});
+  // Keep every plus marker available; depth only changes its scale and opacity.
+  const scale=.76+((p.z+1)/2)*.24;
+  g.setAttribute('transform',`translate(${p.x} ${p.y}) scale(${scale})`);
+  g.setAttribute('opacity',String(.62+((p.z+1)/2)*.38));
+  g.appendChild(svg('circle',{class:'halo',r:u?23:18}));
+  g.appendChild(svg('circle',{class:'ring',r:u?20:16}));
+  if(u){
+   if(u.avatar){const image=svg('image',{x:-15,y:-15,width:30,height:30,preserveAspectRatio:'xMidYMid slice'});image.setAttribute('href',u.avatar);g.appendChild(image);image.setAttribute('clip-path','url(#markerClip)')}
+   else {const text=svg('text',{class:'avatar-initial',y:1});text.textContent=(u.name||'?').slice(0,1).toUpperCase();g.appendChild(text)}
+   if(u.verified){g.appendChild(svg('circle',{class:'check',cx:17,cy:-17,r:8}));g.appendChild(svg('path',{class:'checkmark',d:'M12 -17 l3 3 6 -7'}))}
+   if(u.banned){g.appendChild(svg('circle',{class:'ban-badge',cx:15,cy:15,r:8}));const bt=svg('text',{class:'ban-text',x:15,y:15});bt.textContent='B';g.appendChild(bt)}
+  }else{g.appendChild(svg('path',{class:'plus',d:'M-5 0H5 M0 -5V5'}))}
+  const activate=()=>{if(u)openUser(u.id);else showToast()};
+  g.addEventListener('click',activate);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}});
+  markerGroup.appendChild(g);markerPositions.push({g,idx:i});
+ }
+}
+function rotate(dx,dy){rotation+=dx*.55;tilt=Math.max(-.7,Math.min(.7,tilt+dy*.003));document.getElementById('surface').setAttribute('transform',`rotate(${rotation*.45} 200 200)`);renderMarkers()}
+function openUser(id){const u=users.find(x=>x.id===id);if(!u)return;if(u.avatar){document.getElementById('avatar').src=u.avatar;document.getElementById('avatar').style.visibility='visible'}else{document.getElementById('avatar').removeAttribute('src');document.getElementById('avatar').style.visibility='hidden'}document.getElementById('name').textContent=u.name;document.getElementById('info').textContent=u.info||'';
+document.getElementById('hpValue').textContent=(u.hp===undefined||u.hp===null)?'— HP':u.hp+' HP';
+document.getElementById('shieldValue').textContent=(u.shield===undefined||u.shield===null)?'—':u.shield;
+document.getElementById('spawnText').textContent=u.spawn||u.stats||'Неизвестно';document.getElementById('banMark').style.display=u.banned?'inline-block':'none';document.getElementById('verified').style.display=u.verified?'inline-flex':'none';document.getElementById('verifyButton').style.display=u.verified?'inline-block':'none';document.getElementById('verifyInfo').style.display='none';document.getElementById('verifyInfo').textContent=u.veriftext||'';document.body.classList.add('open');document.getElementById('panel').setAttribute('aria-hidden','false')}
+function closePanel(){document.body.classList.remove('open');document.getElementById('panel').setAttribute('aria-hidden','true')}
+document.getElementById('verifyButton').onclick=()=>{let e=document.getElementById('verifyInfo');e.style.display=e.style.display==='block'?'none':'block'};
+document.getElementById('close').onclick=closePanel;document.getElementById('shade').onclick=closePanel;
+let idleSpin=0;setInterval(()=>{if(!dragging&&!document.body.classList.contains('open')){idleSpin+=.18;rotation+=.18;document.getElementById('surface').setAttribute('transform',`rotate(${rotation*.45} 200 200)`);renderMarkers()}},50);
+globe.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;globe.setPointerCapture(e.pointerId)});
+globe.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;rotate(dx,dy)});
+globe.addEventListener('pointerup',()=>dragging=false);globe.addEventListener('pointercancel',()=>dragging=false);
+document.getElementById('grab').addEventListener('touchstart',e=>touchStartY=e.touches[0].clientY,{passive:true});
+document.getElementById('grab').addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-touchStartY>35)closePanel()},{passive:true});
+document.getElementById('panel').addEventListener('touchstart',e=>touchStartY=e.touches[0].clientY,{passive:true});
+document.getElementById('panel').addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-touchStartY>90&&document.getElementById('panel').scrollTop===0)closePanel()},{passive:true});
+fetch('users.json').then(r=>r.json()).then(data=>{users=data;renderMarkers();initSupabaseSync()}).catch(()=>{users=[{id:1,name:'Артём Крутой',info:'Артём Крутой кароче кентик создателя и ваще он moggает всех.',stats:'67хп 67 щита появился 67 хантавируса.',avatar:'',visible:true},{id:2,name:'Лиза',info:'Ну кароче не крутая че сказать.',stats:'100 хп 100 щита. Появилась с создания сайта.',avatar:'',visible:true},{id:3,name:'MOGGAСОЗДАТЕЛЬ',info:'Ебать чпок чпок крутой ну я!!!',stats:'нахуй надо',avatar:'',visible:true,verified:true,veriftext:'Создатель, верифицированный, крутой'}];renderMarkers();initSupabaseSync()});
+
+// --- Game arena + hidden admin access ---
+const ADMIN_PASSWORD = "NifyOrbit!2026#Admin"; // Stored in client HTML as requested.
+let adminUnlocked = false, pendingRequests = JSON.parse(localStorage.getItem("earth_pending_requests") || "[]");
+let hitCount = 0, lastHitAt = 0, battleRAF = 0;
+const savedGame = (()=>{try{return JSON.parse(localStorage.getItem("earth_game_users")||"null")}catch{return null}})();
+function applyGameState(state){
+ if(!state||!Array.isArray(state.users))return;
+ remoteApplying=true;users=state.users;pendingRequests=Array.isArray(state.pendingRequests)?state.pendingRequests:pendingRequests;
+ try{localStorage.setItem("earth_game_users",JSON.stringify(users));localStorage.setItem("earth_pending_requests",JSON.stringify(pendingRequests))}catch{}
+ remoteApplying=false;updateMarkersAndPanel();if(document.getElementById('adminPanel').classList.contains('active')){renderAdminPlayers();renderAdminRequests()}
+}
+async function saveGame(){
+ try{localStorage.setItem("earth_game_users",JSON.stringify(users));localStorage.setItem("earth_pending_requests",JSON.stringify(pendingRequests))}catch{}
+ updateMarkersAndPanel();
+ if(!supabaseClient||!remoteReady||remoteApplying)return;
+ clearTimeout(remoteSaveTimer);remoteSaveTimer=setTimeout(async()=>{
+  const {data,error}=await supabaseClient.from('earth_orbit_state').update({state:{users,pendingRequests},updated_at:new Date().toISOString()}).eq('id',1).select('id');
+  if(error||!data||!data.length){console.error('Supabase save failed:',error?.message||'No row updated');document.getElementById('adminModeNotice').textContent='Не удалось сохранить в общей базе: '+(error?.message||'нет доступа или строка состояния отсутствует')}
+  else document.getElementById('adminModeNotice').textContent='Изменения сохранены и отправлены всем посетителям.';
+ },180);
+}
+async function initSupabaseSync(){
+ if(!supabaseClient){document.getElementById('adminModeNotice').textContent='Supabase SDK не загрузился. Проверь подключение к интернету.';return}
+ try{
+  const {data,error}=await supabaseClient.from('earth_orbit_state').select('state').eq('id',1).maybeSingle();
+  if(error)throw error;
+  if(data&&data.state)applyGameState(data.state);
+  else {
+   if(savedGame&&Array.isArray(savedGame)){const byId=new Map(savedGame.map(u=>[Number(u.id),u]));users=users.map(u=>({...u,...(byId.get(Number(u.id))||{})}))}
+   const {error:insertError}=await supabaseClient.from('earth_orbit_state').insert({id:1,state:{users,pendingRequests},updated_at:new Date().toISOString()});
+   if(insertError && !/duplicate|unique/i.test(insertError.message))throw insertError;
+  }
+  remoteReady=true;
+  syncChannel=supabaseClient.channel('earth-orbit-live').on('postgres_changes',{event:'UPDATE',schema:'public',table:'earth_orbit_state',filter:'id=eq.1'},payload=>{
+   if(payload.new&&payload.new.state)applyGameState(payload.new.state)
+  }).on('postgres_changes',{event:'INSERT',schema:'public',table:'earth_orbit_state',filter:'id=eq.1'},payload=>{
+   if(payload.new&&payload.new.state)applyGameState(payload.new.state)
+  }).subscribe();
+  document.getElementById('adminModeNotice').textContent='Supabase подключён · общая синхронизация включена.';
+ }catch(err){
+  console.error('Supabase init failed:',err);
+  document.getElementById('adminModeNotice').textContent='Supabase не настроен до конца: открой SUPABASE_SETUP.sql и README_SUPABASE.txt. '+(err.message||'');
+ }
+}
+function updateMarkersAndPanel(){renderMarkers();if(document.body.classList.contains('open')){const name=document.getElementById('name').textContent;const u=users.find(x=>x.name===name);if(u){document.getElementById('hpValue').textContent=(u.hp??'—')+' HP';document.getElementById('shieldValue').textContent=u.shield??'—'}}}
+function damagePlayer(u, amount=1){
+ if(!u||u.dead)return;
+ // Every 25 accepted hits causes exactly 1 HP damage; shield absorbs first.
+ u.hitCount=(u.hitCount||0)+1;
+ if(u.hitCount>=25){u.hitCount=0;if((u.shield||0)>0)u.shield=Math.max(0,u.shield-1);else u.hp=Math.max(0,(u.hp||0)-1)}
+ if((u.hp||0)<=0){u.dead=true;u.visible=false}
+ saveGame();updateMarkersAndPanel();
+}
+function openAdminGate(){document.getElementById('adminGate').classList.add('active');document.getElementById('adminGate').setAttribute('aria-hidden','false');document.getElementById('adminPassword').focus()}
+function closeAdminGate(){document.getElementById('adminGate').classList.remove('active');document.getElementById('adminGate').setAttribute('aria-hidden','true')}
+function adminTab(tab){for(const key of ['players','requests','settings']){document.getElementById('admin'+key[0].toUpperCase()+key.slice(1)).hidden=key!==tab;document.querySelector(`[data-tab="${key}"]`).classList.toggle('active',key===tab)}}
+function renderAdminPlayers(){
+ const list=document.getElementById('adminPlayerList'),q=(document.getElementById('adminSearch').value||'').toLowerCase(),filter=document.getElementById('adminFilter').value;
+ list.replaceChildren();
+ users.filter(u=>(String(u.name).toLowerCase().includes(q)||String(u.id).includes(q))&&(filter==='all'||(filter==='visible'&&u.visible&&!u.dead)||(filter==='dead'&&u.dead)||(filter==='verified'&&u.verified))).forEach(u=>{
+  const row=document.createElement('div');row.className='admin-row';
+  const info=document.createElement('div');const strong=document.createElement('strong');strong.textContent=`#${u.id} · ${u.name}`;const small=document.createElement('small');small.textContent=`HP ${u.hp??'—'} · Щит ${u.shield??'—'} · ${u.visible?'На планете':'Скрыт'}${u.dead?' · ПОГИБ':' '}${u.verified?' · ✓':''}${u.banned?' · БАН':''}`;info.append(strong,small);
+  const actions=document.createElement('div');actions.className='admin-actions';
+  const edit=document.createElement('button');edit.className='admin-btn';edit.textContent='Изменить';edit.onclick=async()=>{const name=prompt('Новое имя:',u.name);if(name===null)return;const infoText=prompt('Информация:',u.info||'');if(infoText===null)return;u.name=name.trim()||u.name;u.info=infoText;const hp=prompt('HP:',String(u.hp??100));if(hp!==null&&Number.isFinite(+hp))u.hp=Math.max(0,Math.min(9999,+hp));const shield=prompt('Щит:',String(u.shield??0));if(shield!==null&&Number.isFinite(+shield))u.shield=Math.max(0,Math.min(9999,+shield));const avatarAction=prompt('Аватар: оставь пусто — без изменений; введи REMOVE — удалить аватар. Для смены используй поле добавления игрока или одобри новую заявку с фото.','');if(avatarAction==='REMOVE')u.avatar='';u.dead=u.hp<=0;await saveGame();renderAdminPlayers();updateMarkersAndPanel()};
+  const verify=document.createElement('button');verify.className='admin-btn';verify.textContent=u.verified?'Снять ✓':'Выдать ✓';verify.onclick=()=>{u.verified=!u.verified;if(u.verified)u.veriftext=u.veriftext||'Верифицированный';saveGame();renderAdminPlayers();updateMarkersAndPanel()};
+  const respawn=document.createElement('button');respawn.className='admin-btn good';respawn.textContent='Респавн';respawn.onclick=()=>{u.hp=Math.max(1,Number(u.maxHp)||100);u.shield=Math.max(0,Number(u.maxShield)||100);u.dead=false;u.visible=true;u.hitCount=0;saveGame();renderAdminPlayers();updateMarkersAndPanel()};
+  const toggle=document.createElement('button');toggle.className='admin-btn';toggle.textContent=u.visible?'Скрыть':'Показать';toggle.onclick=()=>{u.visible=!u.visible;if(u.visible)u.dead=false;saveGame();renderAdminPlayers();updateMarkersAndPanel()};
+  const ban=document.createElement('button');ban.className='admin-btn';ban.textContent=u.banned?'Снять бан':'Забанить';ban.onclick=()=>{u.banned=!u.banned;saveGame();renderAdminPlayers();updateMarkersAndPanel()};actions.append(edit,verify,respawn,toggle,ban);row.append(info,actions);list.append(row)
+ })
+}
+function renderAdminRequests(){const list=document.getElementById('adminRequestList');list.replaceChildren();if(!pendingRequests.length){const p=document.createElement('p');p.className='admin-muted';p.textContent='Пока заявок нет.';list.append(p);return}pendingRequests.forEach(r=>{const row=document.createElement('div');row.className='admin-row';const info=document.createElement('div');const strong=document.createElement('strong');strong.textContent=r.name;const small=document.createElement('small');small.textContent=`Email: ${r.email||'не указан'} · ${r.info||'Без описания'} · ${r.created_at?new Date(r.created_at).toLocaleString():''}`;info.append(strong,small);if(r.avatar){const im=document.createElement('img');im.src=r.avatar;im.alt='Аватар заявки';im.style='width:48px;height:48px;object-fit:cover;border-radius:12px;margin-top:8px';info.append(im)}const actions=document.createElement('div');actions.className='admin-actions';const approve=document.createElement('button');approve.className='admin-btn good';approve.textContent='Проверить / одобрить';approve.onclick=async()=>{const name=prompt('Имя игрока:',r.name);if(name===null)return;const infoText=prompt('Информация о игроке:',r.info||'');if(infoText===null)return;const hp=prompt('HP:', '100');if(hp===null)return;const shield=prompt('Щит:', '100');if(shield===null)return;const verified=confirm('Выдать галочку верификации? Нажми ОК — да, Отмена — нет.');let avatar=r.avatar||'';const avatarChoice=prompt('Аватар: USE — оставить фото из заявки; REMOVE — удалить; CHANGE — загрузить другое фото.','USE');if(avatarChoice&&avatarChoice.toUpperCase()==='REMOVE')avatar='';else if(avatarChoice&&avatarChoice.toUpperCase()==='CHANGE'){try{const file=await pickAdminAvatar();if(file)avatar=await imageToDataUrl(file)}catch(e){alert(e.message);return}}const u={id:Math.max(0,...users.map(x=>Number(x.id)||0))+1,name:name.trim()||r.name,info:infoText,avatar,hp:Math.max(0,Math.min(9999,Number(hp)||0)),shield:Math.max(0,Math.min(9999,Number(shield)||0)),dead:false,banned:false,verified,visible:true,stats:'',spawn:'Появился после одобрения заявки'};users.push(u);await saveGame();const deleted=await deletePublicRequest(r.id);if(!deleted){users=users.filter(x=>x!==u);await saveGame();return}renderAdminRequests();renderAdminPlayers()};const reject=document.createElement('button');reject.className='admin-btn';reject.textContent='Отклонить';reject.onclick=async()=>{await deletePublicRequest(r.id);renderAdminRequests()};actions.append(approve,reject);row.append(info,actions);list.append(row)})}
+async function loadPublicRequests(){if(!supabaseClient)return;const {data,error}=await supabaseClient.from('earth_orbit_requests').select('id,name,email,info,avatar,created_at').order('created_at',{ascending:false});if(error){console.warn('Could not load requests:',error.message);return}pendingRequests=data||[];try{localStorage.setItem('earth_pending_requests',JSON.stringify(pendingRequests))}catch{}if(document.getElementById('adminPanel').classList.contains('active'))renderAdminRequests()}
+async function deletePublicRequest(id){if(!supabaseClient||!adminUnlocked)return false;const {error}=await supabaseClient.from('earth_orbit_requests').delete().eq('id',id);if(error){alert('Не удалось обработать заявку: '+error.message);await loadPublicRequests();return false}pendingRequests=pendingRequests.filter(x=>x.id!==id);return true}
+function pickAdminAvatar(){return new Promise(resolve=>{const picker=document.getElementById('adminAvatarPicker');picker.value='';picker.onchange=()=>resolve(picker.files[0]||null);picker.click()})}
+function imageToDataUrl(file){return new Promise((resolve,reject)=>{if(!file){resolve('');return}if(!file.type.startsWith('image/')){reject(new Error('Выбери файл изображения.'));return}if(file.size>8*1024*1024){reject(new Error('Аватарка должна быть меньше 8 МБ.'));return}const reader=new FileReader();reader.onerror=()=>reject(new Error('Не удалось прочитать фото.'));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('Не удалось открыть изображение.'));img.onload=()=>{const c=document.createElement('canvas'),max=320,scale=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.78))};img.src=reader.result};reader.readAsDataURL(file)})}
+async function submitJoinRequest(e){e.preventDefault();const name=document.getElementById('joinName').value.trim(),email=document.getElementById('joinEmail').value.trim(),info=document.getElementById('joinInfo').value.trim(),file=document.getElementById('joinAvatar').files[0],status=document.getElementById('joinStatus'),btn=document.getElementById('joinSubmit');if(!name||!email){status.textContent='Имя и email обязательны.';return}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='Проверь email — адрес выглядит неверно.';return}if(!supabaseClient){status.textContent='Не удалось подключиться к базе. Попробуй позже.';return}btn.disabled=true;status.textContent='Готовим заявку…';try{const avatar=await imageToDataUrl(file);status.textContent='Отправляем заявку…';const {error}=await supabaseClient.from('earth_orbit_requests').insert({name,email,info,avatar});if(error)throw error;document.getElementById('joinForm').reset();status.textContent='Заявка отправлена! После проверки она появится на планете.';setTimeout(closeJoin,2200)}catch(error){console.error(error);status.textContent='Ошибка отправки: '+(error.message||'проверь SQL-схему таблицы заявок.')}finally{btn.disabled=false}}
+document.getElementById('joinForm').addEventListener('submit',submitJoinRequest);
+async function makeRequest(direct=false){const name=document.getElementById('newName').value.trim();if(!name){alert('Укажи имя игрока');return}let avatar='';try{avatar=await imageToDataUrl(document.getElementById('newAvatar').files[0])}catch(e){alert(e.message);return}const req={id:Math.max(0,...users.map(u=>Number(u.id)||0))+1,name,avatar,info:document.getElementById('newInfo').value.trim(),hp:100,shield:100,dead:false,banned:false,verified:false,visible:true,stats:'',spawn:'Добавлен администратором'};if(direct){users.push(req);await saveGame();renderAdminPlayers()}else{alert('Для создания заявки используй кнопку «+» на планете.')}renderAdminRequests();document.getElementById('newName').value='';document.getElementById('newInfo').value='';document.getElementById('newAvatar').value=''}
+document.getElementById('adminLogin').onclick=async()=>{
+ const email=document.getElementById('adminEmail').value.trim(),password=document.getElementById('adminPassword').value;
+ const err=document.getElementById('adminError');err.textContent='Проверяем аккаунт Supabase…';
+ if(!supabaseClient){err.textContent='Supabase SDK не загрузился.';return}
+ if(!email||!password){err.textContent='Введи email и пароль аккаунта Supabase.';return}
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){err.textContent='Ошибка входа: '+error.message;return}
+ const {data:adminCheck,error:checkError}=await supabaseClient.rpc('is_earth_orbit_admin');
+ if(checkError||!adminCheck){await supabaseClient.auth.signOut();err.textContent='Аккаунт вошёл, но не добавлен в список администраторов базы.';return}
+ adminUnlocked=true;closeAdminGate();document.getElementById('adminPanel').classList.add('active');document.getElementById('adminPanel').setAttribute('aria-hidden','false');renderAdminPlayers();await loadPublicRequests();renderAdminRequests();if(!window.requestAdminChannel){window.requestAdminChannel=supabaseClient.channel('earth-orbit-requests-admin').on('postgres_changes',{event:'*',schema:'public',table:'earth_orbit_requests'},()=>loadPublicRequests()).subscribe()}err.textContent='Доступ разрешён.';
+};
+document.getElementById('adminPassword').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('adminLogin').click()});
+document.getElementById('adminEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('adminLogin').click()});
+document.getElementById('adminGateClose').onclick=closeAdminGate;
+document.getElementById('adminLogout').onclick=async()=>{adminUnlocked=false;if(supabaseClient)await supabaseClient.auth.signOut();document.getElementById('adminPanel').classList.remove('active');document.getElementById('adminPanel').setAttribute('aria-hidden','true')};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>adminTab(b.dataset.tab));
+document.getElementById('adminSearch').oninput=renderAdminPlayers;document.getElementById('adminFilter').onchange=renderAdminPlayers;
+document.getElementById('addRequest').onclick=()=>makeRequest(false);document.getElementById('addPlayerDirect').onclick=()=>makeRequest(true);
+document.getElementById('exportUsers').onclick=()=>{const blob=new Blob([JSON.stringify(users,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='users.json';a.click();URL.revokeObjectURL(a.href)};
+// Secret gesture: double tap lower-right, then tap upper-right.
+let cornerTapAt=0,cornerStage=0;
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#panel,#adminGate,#adminPanel'))return;const x=e.clientX/window.innerWidth,y=e.clientY/window.innerHeight,now=Date.now();if(x>.82&&y>.82){if(now-cornerTapAt<500)cornerStage=1;cornerTapAt=now;return}if(cornerStage===1&&x>.82&&y<.18){cornerStage=0;openAdminGate()}else if(y<.18||x<.7)cornerStage=0});
+// Arena collision simulation: moving marker bodies bounce/repel. Visual hit pulse counts as hits.
+let bodies=[];
+function initArena(){bodies=users.filter(u=>u.visible&&!u.dead).slice(0,15).map((u,i)=>({u,x:200+Math.cos(i*2.4)*80,y:200+Math.sin(i*2.4)*80,vx:Math.cos(i*4.1)*.6,vy:Math.sin(i*3.3)*.6,r:18}));}
+function arenaTick(){if(!bodies.length)initArena();for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){const a=bodies[i],b=bodies[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01,min=a.r+b.r+4;if(d<min){const nx=dx/d,ny=dy/d,imp=(min-d)*.08+.2;a.vx-=nx*imp;a.vy-=ny*imp;b.vx+=nx*imp;b.vy+=ny*imp;if(Math.random()<.035){damagePlayer(a.u);damagePlayer(b.u)}}}for(const b of bodies){b.x+=b.vx;b.y+=b.vy;b.vx*=.992;b.vy*=.992;const dx=b.x-200,dy=b.y-200,d=Math.hypot(dx,dy)||1;if(d>137){const nx=dx/d,ny=dy/d;b.x=200+nx*137;b.y=200+ny*137;b.vx-=2*nx*(b.vx*nx+b.vy*ny);b.vy-=2*ny*(b.vx*nx+b.vy*ny)}}if(!document.hidden)requestAnimationFrame(arenaTick)}
+setTimeout(()=>{initArena();requestAnimationFrame(arenaTick)},500);
+
+</script></body></html>
