@@ -1,0 +1,19 @@
+ADMIN PANEL SETUP
+
+ADMIN PASSWORD
+   NifyOrbit!2026#Admin
+   The password is already set in index.html; no setup placeholder remains.
+
+2) Hidden access gesture:
+   Double-tap the bottom-right corner, then tap the top-right corner.
+
+3) IMPORTANT SECURITY:
+   This is a static GitHub Pages site. As requested, the password is stored directly in index.html and is visible to anyone who inspects the JavaScript source.
+   Local changes are stored only in the current browser (localStorage), and are NOT shared with all visitors.
+   Do not use this client-side gate to protect sensitive data.
+   For real shared admin control, connect Supabase Auth + database tables + Row Level Security policies.
+   Never put the Supabase service_role key in index.html.
+
+4) Combat prototype:
+   Markers repel and bounce. Each simulated hit increments hitCount; every 25 hits removes 1 shield point first, then 1 HP.
+   At 0 HP, a player is marked dead and hidden. Admin can respawn them.
